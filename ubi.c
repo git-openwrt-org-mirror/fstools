@@ -143,13 +143,13 @@ static int main_detach(char *type)
 
 	libubi = libubi_open();
 	if (!libubi) {
-		ULOG_ERR("cannot open libubi");
+		ULOG_ERR("cannot open libubi\n");
 		return -1;
 	}
 
 	err = ubidetach(libubi, mtd);
 	if (err) {
-		ULOG_ERR("cannot detach \"%s\"", mtd);
+		ULOG_ERR("cannot detach \"%s\"\n", mtd);
 		return -1;
 	}
 
@@ -183,7 +183,7 @@ static int main_image(char *partition, char *image, char *overlay)
 
 	libubi = libubi_open();
 	if (!libubi) {
-		ULOG_ERR("cannot open libubi");
+		ULOG_ERR("cannot open libubi\n");
 		return -1;
 	}
 
@@ -207,20 +207,20 @@ static int main_image(char *partition, char *image, char *overlay)
 
 	err = ubidetach(libubi, mtd);
 	if (err) {
-		ULOG_ERR("cannot detach \"%s\"", mtd);
+		ULOG_ERR("cannot detach \"%s\"\n", mtd);
 		return -1;
 	}
 
 	err = ubiattach(libubi, mtd);
 	if (err) {
-		ULOG_ERR("cannot attach \"%s\"", mtd);
+		ULOG_ERR("cannot attach \"%s\"\n", mtd);
 		return -1;
 	}
 
 	if (data) {
 		err = ubirmvol(libubi, node, overlay);
 		if (err) {
-			ULOG_ERR("cannot remove \"%s\"", node);
+			ULOG_ERR("cannot remove \"%s\"\n", node);
 			return -1;
 		}
 	}
@@ -232,20 +232,20 @@ static int main_image(char *partition, char *image, char *overlay)
 
 	err = ubirsvol(libubi, node, partition, s.st_size);
 	if (err) {
-		ULOG_ERR("cannot resize \"%s\"", partition);
+		ULOG_ERR("cannot resize \"%s\"\n", partition);
 		return -1;
 	}
 
 	err = ubiupdatevol(libubi, volume, image);
 	if (err) {
-		ULOG_ERR("cannot update \"%s\"", volume);
+		ULOG_ERR("cannot update \"%s\"\n", volume);
 		return -1;
 	}
 
 	if (overlay) {
 		err = ubimkvol(libubi, node, overlay, 1);
 		if (err) {
-			ULOG_ERR("cannot make \"%s\"", overlay);
+			ULOG_ERR("cannot make \"%s\"\n", overlay);
 			return -1;
 		}
 	}
@@ -263,7 +263,7 @@ static int main_info(void)
 
 	libubi = libubi_open();
 	if (!libubi) {
-		ULOG_ERR("cannot open libubi");
+		ULOG_ERR("cannot open libubi\n");
 		return -1;
 	}
 
