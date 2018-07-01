@@ -1572,22 +1572,24 @@ static int main_extroot(int argc, char **argv)
 	/* ... but it also could be an UBI volume */
 	memset(blkdev_path, 0, sizeof(blkdev_path));
 	libubi = libubi_open();
-	find_block_ubi(libubi, "rootfs_data", blkdev_path, sizeof(blkdev_path));
-	libubi_close(libubi);
-	if (blkdev_path[0]) {
-		char cfg[] = "/tmp/ubifs_cfg";
+	if (libubi) {
+		find_block_ubi(libubi, "rootfs_data", blkdev_path, sizeof(blkdev_path));
+		libubi_close(libubi);
+		if (blkdev_path[0]) {
+			char cfg[] = "/tmp/ubifs_cfg";
 
-		/* Mount volume and try extroot (using fstab from that vol) */
-		mkdir_p(cfg);
-		if (!mount(blkdev_path, cfg, "ubifs", MS_NOATIME, NULL)) {
-			err = mount_extroot(cfg);
-			umount2(cfg, MNT_DETACH);
+			/* Mount volume and try extroot (using fstab from that vol) */
+			mkdir_p(cfg);
+			if (!mount(blkdev_path, cfg, "ubifs", MS_NOATIME, NULL)) {
+				err = mount_extroot(cfg);
+				umount2(cfg, MNT_DETACH);
+			}
+			if (err < 0)
+				rmdir("/tmp/overlay");
+			rmdir(cfg);
+			return err;
 		}
-		if (err < 0)
-			rmdir("/tmp/overlay");
-		rmdir(cfg);
-		return err;
-       }
+	}
 #endif
 
 	/* As a last resort look for /etc/config/fstab on "rootfs" partition */
