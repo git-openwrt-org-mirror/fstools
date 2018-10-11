@@ -304,6 +304,12 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 {
 	struct vfat_super_block *vs;
 	struct msdos_super_block *ms;
+
+	union {
+		struct vfat_super_block vs;
+		struct msdos_super_block ms;
+	} saved;
+
 	unsigned char *vol_label = 0;
 	const unsigned char *boot_label = NULL;
 	unsigned char *vol_serno = NULL, vol_label_buf[12] = { 0 };
@@ -328,7 +334,10 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 	if (ms->ms_fat_length) {
 		/* the label may be an attribute in the root directory */
 		uint32_t root_start = (reserved + fat_size) * sector_size;
-		uint32_t root_dir_entries = unaligned_le16(&vs->vs_dir_entries);
+		uint32_t root_dir_entries = unaligned_le16(&ms->ms_dir_entries);
+
+		/* Save msdos super block in buffer */
+		memcpy(&saved.ms, ms, sizeof(struct msdos_super_block));
 
 		vol_label = search_fat_label(pr, root_start, root_dir_entries);
 		if (vol_label) {
@@ -336,8 +345,8 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 			vol_label = vol_label_buf;
 		}
 
-		boot_label = ms->ms_label;
-		vol_serno = ms->ms_serno;
+		boot_label = saved.ms.ms_label;
+		vol_serno = saved.ms.ms_serno;
 
 		blkid_probe_set_value(pr, "SEC_TYPE", (unsigned char *) "msdos",
                               sizeof("msdos"));
@@ -352,6 +361,9 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 		uint16_t fsinfo_sect;
 		int maxloop = 100;
 
+		/* Save vfat super block in buffer */
+		memcpy(&saved.vs, vs, sizeof(struct vfat_super_block));
+
 		/* Search the FAT32 root dir for the label attribute */
 		uint32_t buf_size = vs->vs_cluster_size * sector_size;
 		uint32_t start_data_sect = reserved + fat_size;
@@ -364,7 +376,7 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 			uint64_t next_off, fat_entry_off;
 			int count;
 
-			next_sect_off = (next - 2) * vs->vs_cluster_size;
+			next_sect_off = (next - 2) * saved.vs.vs_cluster_size;
 			next_off = (uint64_t)(start_data_sect + next_sect_off) *
 				sector_size;
 
@@ -390,15 +402,15 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 
 		version = "FAT32";
 
-		boot_label = vs->vs_label;
-		vol_serno = vs->vs_serno;
+		boot_label = saved.vs.vs_label;
+		vol_serno = saved.vs.vs_serno;
 
 		/*
 		 * FAT32 should have a valid signature in the fsinfo block,
 		 * but also allow all bytes set to '\0', because some volumes
 		 * do not set the signature at all.
 		 */
-		fsinfo_sect = le16_to_cpu(vs->vs_fsinfo_sector);
+		fsinfo_sect = le16_to_cpu(saved.vs.vs_fsinfo_sector);
 		if (fsinfo_sect) {
 			struct fat32_fsinfo *fsinfo;
 
