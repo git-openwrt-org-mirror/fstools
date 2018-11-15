@@ -1041,6 +1041,17 @@ static int mount_device(struct probe_info *pr, int type)
 		return err;
 	}
 
+	if (m && mp && (strcmp(mp, m->target) == 0))
+	{
+		ULOG_INFO("%s is already mounted on requested target %s\n", pr->dev, m->target);
+		free(mp);
+		return 0;
+	}
+
+	/* mp is no longer used */
+	if (mp)
+		free(mp);
+
 	if (type == TYPE_HOTPLUG)
 		blockd_notify("hotplug", device, m, pr);
 
