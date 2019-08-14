@@ -1022,7 +1022,7 @@ static int mount_device(struct probe_info *pr, int type)
 	mp = find_mount_point(pr->dev);
 	if (mp) {
 		if (m && m->type == TYPE_MOUNT && strcmp(m->target, mp)) {
-			ULOG_ERR("%s is already mounted on %s\n", pr->dev, mp);
+			ULOG_INFO("%s is already mounted on %s\n", pr->dev, mp);
 			err = -1;
 		} else
 			err = 0;
@@ -1094,6 +1094,8 @@ static int mount_device(struct probe_info *pr, int type)
 		ULOG_ERR("mounting %s (%s) as %s failed (%d) - %m\n",
 				pr->dev, pr->type, target, errno);
 		return err;
+	} else {
+		ULOG_INFO("mounted %s (%s) as %s\n", pr->dev, pr->type, target);
 	}
 
 	handle_swapfiles(true);
@@ -1123,7 +1125,7 @@ static int umount_device(char *path, int type, bool all)
 		ULOG_ERR("unmounting %s (%s) failed (%d) - %m\n", path, mp,
 			 errno);
 	} else {
-		ULOG_INFO("unmounted %s (%s)\n", path, mp);
+		ULOG_INFO("unmounted %s from %s\n", path, mp);
 		rmdir(mp);
 	}
 
