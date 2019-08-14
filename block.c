@@ -201,14 +201,6 @@ static char *blobmsg_get_strdup(struct blob_attr *attr)
 	return strdup(blobmsg_get_string(attr));
 }
 
-static char *blobmsg_get_basename(struct blob_attr *attr)
-{
-	if (!attr)
-		return NULL;
-
-	return strdup(basename(blobmsg_get_string(attr)));
-}
-
 static void parse_mount_options(struct mount *m, char *optstr)
 {
 	int i;
@@ -275,7 +267,7 @@ static int mount_add(struct uci_section *s)
 	m->uuid = blobmsg_get_strdup(tb[MOUNT_UUID]);
 	m->label = blobmsg_get_strdup(tb[MOUNT_LABEL]);
 	m->target = blobmsg_get_strdup(tb[MOUNT_TARGET]);
-	m->device = blobmsg_get_basename(tb[MOUNT_DEVICE]);
+	m->device = blobmsg_get_strdup(tb[MOUNT_DEVICE]);
 	if (tb[MOUNT_AUTOFS])
 		m->autofs = blobmsg_get_u32(tb[MOUNT_AUTOFS]);
 	else
@@ -322,7 +314,7 @@ static int swap_add(struct uci_section *s)
 	m->type = TYPE_SWAP;
 	m->uuid = blobmsg_get_strdup(tb[SWAP_UUID]);
 	m->label = blobmsg_get_strdup(tb[SWAP_LABEL]);
-	m->device = blobmsg_get_basename(tb[SWAP_DEVICE]);
+	m->device = blobmsg_get_strdup(tb[SWAP_DEVICE]);
 	if (tb[SWAP_PRIO])
 		m->prio = blobmsg_get_u32(tb[SWAP_PRIO]);
 	if (m->prio)
@@ -553,7 +545,7 @@ static struct probe_info* find_block_info(char *uuid, char *label, char *path)
 
 	if (path)
 		list_for_each_entry(pr, &devices, list)
-			if (pr->dev && !strcmp(basename(pr->dev), basename(path)))
+			if (pr->dev && !strcmp(pr->dev, path))
 				return pr;
 
 	return NULL;
@@ -1003,19 +995,17 @@ static int mount_device(struct probe_info *pr, int type)
 	if (!pr)
 		return -1;
 
-	device = basename(pr->dev);
-
 	if (!strcmp(pr->type, "swap")) {
 		if ((type == TYPE_HOTPLUG) && !auto_swap)
 			return -1;
-		m = find_swap(pr->uuid, pr->label, device);
+		m = find_swap(pr->uuid, pr->label, pr->dev);
 		if (m || anon_swap)
 			swapon(pr->dev, (m) ? (m->prio) : (0));
 
 		return 0;
 	}
 
-	m = find_block(pr->uuid, pr->label, device, NULL);
+	m = find_block(pr->uuid, pr->label, pr->dev, NULL);
 	if (m && m->extroot)
 		return -1;
 
@@ -1042,7 +1032,9 @@ static int mount_device(struct probe_info *pr, int type)
 		free(mp);
 
 	if (type == TYPE_HOTPLUG)
-		blockd_notify("hotplug", device, m, pr);
+		blockd_notify("hotplug", pr->dev, m, pr);
+
+	device = basename(pr->dev);
 
 	/* Check if device should be mounted & set the target directory */
 	if (m) {
@@ -1101,7 +1093,7 @@ static int mount_device(struct probe_info *pr, int type)
 	handle_swapfiles(true);
 
 	if (type != TYPE_AUTOFS)
-		blockd_notify("mount", device, NULL, NULL);
+		blockd_notify("mount", pr->dev, NULL, NULL);
 
 	return 0;
 }
@@ -1118,7 +1110,7 @@ static int umount_device(char *path, int type, bool all)
 		return 0;
 
 	if (type != TYPE_AUTOFS)
-		blockd_notify("umount", basename(path), NULL, NULL);
+		blockd_notify("umount", path, NULL, NULL);
 
 	err = umount2(mp, MNT_DETACH);
 	if (err) {
@@ -1139,7 +1131,7 @@ static int mount_action(char *action, char *device, int type)
 
 	if (!action || !device)
 		return -1;
-	snprintf(path, sizeof(path), "/dev/%s", device);
+	snprintf(path, sizeof(path), "%s", device);
 
 	if (!strcmp(action, "remove")) {
 		if (type == TYPE_HOTPLUG)
@@ -1426,8 +1418,11 @@ static int check_extroot(char *path)
 			 errno);
 	fclose(fp);
 
-	if (*uuid && !strcasecmp(uuid, pr->uuid))
-		return 0;
+	if (*uuid && !strcasecmp(uuid, pr->uuid)) {
+		ULOG_ERR("extroot: UUID mismatch (root: %s, %s: %s)\n",
+		         pr->uuid, path, uuid);
+		return -1;
+	}
 
 	ULOG_ERR("extroot: UUID mismatch (root: %s, %s: %s)\n", pr->uuid,
 		 basename(path), uuid);
