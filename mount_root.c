@@ -72,7 +72,9 @@ start(int argc, char *argv[1])
 		return ramoverlay();
 
 	case FS_EXT4:
+#ifdef OVL_F2FS_ENABLE
 	case FS_F2FS:
+#endif
 	case FS_JFFS2:
 	case FS_UBIFS:
 		mount_overlay(data);
@@ -112,7 +114,9 @@ done(int argc, char *argv[1])
 		return jffs2_switch(v);
 
 	case FS_EXT4:
+#ifdef OVL_F2FS_ENABLE
 	case FS_F2FS:
+#endif
 	case FS_JFFS2:
 	case FS_UBIFS:
 		fs_state_set("/overlay", FS_STATE_READY);
