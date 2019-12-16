@@ -27,6 +27,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 
+#include "../overlay_partition.h"
 #include "libfstools.h"
 #include "volume.h"
 
@@ -293,7 +294,7 @@ jffs2_switch(struct volume *v)
 	volume_init(v);
 	mp = find_mount_point(v->blk, 0);
 	if (mp) {
-		ULOG_ERR("rootfs_data:%s is already mounted as %s\n", v->blk, mp);
+		ULOG_ERR("%s:%s is already mounted as %s\n", get_overlay_partition(), v->blk, mp);
 		return -1;
 	}
 
@@ -414,7 +415,7 @@ int mount_overlay(struct volume *v)
 
 	mp = find_mount_point(v->blk, 0);
 	if (mp) {
-		ULOG_ERR("rootfs_data:%s is already mounted as %s\n", v->blk, mp);
+		ULOG_ERR("%s:%s is already mounted as %s\n", get_overlay_partition(), v->blk, mp);
 		return -1;
 	}
 

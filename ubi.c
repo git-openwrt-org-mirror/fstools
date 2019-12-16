@@ -23,6 +23,7 @@
 
 #include <libubox/ulog.h>
 
+#include "overlay_partition.h"
 #include "libubi/libubi-tiny.h"
 
 static int print_usage(void)
@@ -314,7 +315,7 @@ int main(int argc, char **argv)
 		return main_image("rootfs", argv[2], NULL);
 
 	} else if (!strcmp(argv[1], "overlay")) {
-		return main_image("rootfs", argv[2], "rootfs_data");
+		return main_image("rootfs", argv[2], get_overlay_partition());
 
 	} else if (!strcmp(argv[1], "detach")) {
 		return main_detach(argv[2]);

@@ -32,6 +32,7 @@
 #include <libubox/md5.h>
 #include <libubox/ulog.h>
 
+#include "overlay_partition.h"
 #include "libfstools/libfstools.h"
 #include "libfstools/volume.h"
 #include "libfstools/snapshot.h"
@@ -39,7 +40,7 @@
 static int
 config_write(int argc, char **argv)
 {
-	struct volume *v = volume_find("rootfs_data");
+	struct volume *v = volume_find(get_overlay_partition());
 	int ret;
 
 	if (!v)
@@ -56,7 +57,7 @@ config_write(int argc, char **argv)
 static int
 config_read(int argc, char **argv)
 {
-	struct volume *v = volume_find("rootfs_data");
+	struct volume *v = volume_find(get_overlay_partition());
 	struct file_header conf, sentinel;
 	int next, block, ret = 0;
 	uint32_t seq;
@@ -84,7 +85,7 @@ config_read(int argc, char **argv)
 static int
 snapshot_write(int argc, char **argv)
 {
-	struct volume *v = volume_find("rootfs_data");
+	struct volume *v = volume_find(get_overlay_partition());
 	int block, ret;
 	uint32_t seq;
 
@@ -117,9 +118,9 @@ snapshot_mark(int argc, char **argv)
 	if (getchar() != 'y')
 		return -1;
 
-	v = volume_find("rootfs_data");
+	v = volume_find(get_overlay_partition());
 	if (!v) {
-		ULOG_ERR("MTD partition 'rootfs_data' not found\n");
+		ULOG_ERR("MTD partition '%s' not found\n", get_overlay_partition());
 		return -1;
 	}
 
@@ -146,7 +147,7 @@ snapshot_mark(int argc, char **argv)
 static int
 snapshot_read(int argc, char **argv)
 {
-	struct volume *v = volume_find("rootfs_data");;
+	struct volume *v = volume_find(get_overlay_partition());;
 	int block = 0, ret = 0;
 	char file[64];
 
@@ -179,7 +180,7 @@ out:
 static int
 snapshot_info(void)
 {
-	struct volume *v = volume_find("rootfs_data");
+	struct volume *v = volume_find(get_overlay_partition());
 	struct file_header hdr = { 0 }, conf;
 	int block = 0;
 
