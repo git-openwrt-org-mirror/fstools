@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fnmatch.h>
 
+#include "../overlay_partition.h"
 #include "libfstools.h"
 #include "volume.h"
 
@@ -482,7 +483,7 @@ static struct volume *rootdisk_volume_find(char *name)
 	struct squashfs_super_block sb;
 	struct rootdev_volume *p;
 
-	if (strcmp(name, "rootfs_data") != 0)
+	if (strcmp(name, get_overlay_partition()) != 0)
 		return NULL;
 
 	if (!rootdev)
@@ -504,7 +505,7 @@ static struct volume *rootdisk_volume_find(char *name)
 
 	p = calloc(1, sizeof(*p));
 	p->v.drv = &rootdisk_driver;
-	p->v.name = "rootfs_data";
+	p->v.name = get_overlay_partition();
 
 #ifdef OVL_ROOTDISK_PART_ENABLE
 	parse_cmdline();
@@ -530,7 +531,7 @@ static struct volume *rootdisk_volume_find(char *name)
 		}
 
 		if (rootdisk_info.ro == 0) {
-			/* try to find ext4/f2fs partition with label "rootfs_data" on rootdev */
+			/* try to find ext4/f2fs partition with label "<overlay_partition>" on rootdev */
 			if (!ovl_partition)
 				ret = rootdisk_volume_find_partition(name, p);
 			else if (ovl_partition == rootdisk_info.rootpart)
@@ -750,14 +751,14 @@ static int rootdisk_volume_init(struct volume *v)
 		if (rootdisk_use_f2fs(p)) {
 			ULOG_INFO("creating f2fs overlay filesystem (%s, offset %llu)...\n",
 				v->blk, p->offset);
-			snprintf(str, sizeof(str), "mkfs.f2fs -q -l rootfs_data %s", v->blk);
+			snprintf(str, sizeof(str), "mkfs.f2fs -q -l %s %s", get_overlay_partition(), v->blk);
 		}
 		else
 #endif
 		{
 			ULOG_INFO("creating ext4 overlay filesystem (%s, offset %llu)...\n",
 				v->blk, p->offset);
-			snprintf(str, sizeof(str), "mkfs.ext4 -q -L rootfs_data %s", v->blk);
+			snprintf(str, sizeof(str), "mkfs.ext4 -q -L %s %s", get_overlay_partition(), v->blk);
 		}
 		ret = system(str);
 		if (ret)

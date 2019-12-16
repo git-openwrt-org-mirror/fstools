@@ -46,6 +46,7 @@
 #include <libubox/vlist.h>
 #include <libubus.h>
 
+#include "overlay_partition.h"
 #include "probe.h"
 
 #define AUTOFS_MOUNT_PATH       "/tmp/run/blockd/"
@@ -1518,6 +1519,7 @@ static int main_extroot(int argc, char **argv)
 {
 	struct probe_info *pr;
 	char blkdev_path[32] = { 0 };
+	char overlay_label[64];
 	int err = -1;
 #ifdef UBIFS_EXTROOT
 	libubi_t libubi;
@@ -1538,12 +1540,14 @@ static int main_extroot(int argc, char **argv)
 	ulog_threshold(LOG_INFO);
 
 	/*
-	 * Look for "rootfs_data". We will want to mount it and check for
+	 * Look for "<overlay_label>". We will want to mount it and check for
 	 * extroot configuration.
 	 */
 
+	snprintf(overlay_label, sizeof(overlay_label), "\"%s\"", get_overlay_partition());
+
 	/* Start with looking for MTD partition */
-	find_block_mtd("\"rootfs_data\"", blkdev_path, sizeof(blkdev_path));
+	find_block_mtd(overlay_label, blkdev_path, sizeof(blkdev_path));
 	if (blkdev_path[0]) {
 		pr = find_block_info(NULL, NULL, blkdev_path);
 		if (pr && !strcmp(pr->type, "jffs2")) {
@@ -1570,7 +1574,7 @@ static int main_extroot(int argc, char **argv)
 	memset(blkdev_path, 0, sizeof(blkdev_path));
 	libubi = libubi_open();
 	if (libubi) {
-		find_block_ubi(libubi, "rootfs_data", blkdev_path, sizeof(blkdev_path));
+		find_block_ubi(libubi, get_overlay_partition(), blkdev_path, sizeof(blkdev_path));
 		libubi_close(libubi);
 		if (blkdev_path[0]) {
 			char cfg[] = "/tmp/ubifs_cfg";

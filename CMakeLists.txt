@@ -14,7 +14,8 @@ ADD_LIBRARY(fstools SHARED
 		libfstools/mount.c
 		libfstools/ubi.c
 		libfstools/rootdisk.c
-		libfstools/find.c)
+		libfstools/find.c
+		overlay_partition.c)
 TARGET_LINK_LIBRARIES(fstools ubox)
 INSTALL(TARGETS fstools LIBRARY DESTINATION lib)
 
@@ -70,7 +71,7 @@ IF(DEFINED CMAKE_OVL_MOUNT_FULL_ACCESS_TIME)
 	ADD_DEFINITIONS(-DOVL_MOUNT_FULL_ACCESS_TIME)
 ENDIF(DEFINED CMAKE_OVL_MOUNT_FULL_ACCESS_TIME)
 
-ADD_EXECUTABLE(mount_root mount_root.c)
+ADD_EXECUTABLE(mount_root mount_root.c overlay_partition.c)
 TARGET_LINK_LIBRARIES(mount_root fstools)
 INSTALL(TARGETS mount_root RUNTIME DESTINATION sbin)
 
@@ -80,7 +81,7 @@ ADD_EXECUTABLE(blockd blockd.c)
 TARGET_LINK_LIBRARIES(blockd fstools ubus blobmsg_json ${json})
 INSTALL(TARGETS blockd RUNTIME DESTINATION sbin)
 
-ADD_EXECUTABLE(block block.c probe.c probe-libblkid.c)
+ADD_EXECUTABLE(block block.c probe.c probe-libblkid.c overlay_partition.c)
 IF(DEFINED CMAKE_UBIFS_EXTROOT)
 	ADD_DEFINITIONS(-DUBIFS_EXTROOT)
 	TARGET_LINK_LIBRARIES(block blkid-tiny dl uci ubox ubus blobmsg_json ubi-utils ${json})
@@ -89,14 +90,14 @@ ELSE(DEFINED CMAKE_UBIFS_EXTROOT)
 ENDIF(DEFINED CMAKE_UBIFS_EXTROOT)
 INSTALL(TARGETS block RUNTIME DESTINATION sbin)
 
-ADD_EXECUTABLE(jffs2reset jffs2reset.c)
+ADD_EXECUTABLE(jffs2reset jffs2reset.c overlay_partition.c)
 TARGET_LINK_LIBRARIES(jffs2reset fstools)
 INSTALL(TARGETS jffs2reset RUNTIME DESTINATION sbin)
 
-ADD_EXECUTABLE(snapshot_tool snapshot.c)
+ADD_EXECUTABLE(snapshot_tool snapshot.c overlay_partition.c)
 TARGET_LINK_LIBRARIES(snapshot_tool fstools)
 INSTALL(TARGETS snapshot_tool RUNTIME DESTINATION sbin)
 
-ADD_EXECUTABLE(ubi ubi.c)
+ADD_EXECUTABLE(ubi ubi.c overlay_partition.c)
 TARGET_LINK_LIBRARIES(ubi ubi-utils ubox)
 INSTALL(TARGETS ubi RUNTIME DESTINATION sbin)

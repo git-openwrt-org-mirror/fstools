@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-
+#include "overlay_partition.h"
 #include "libfstools/libfstools.h"
 #include "libfstools/volume.h"
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
 	/*
 	 * TODO: Currently this only checks if kernel supports OverlayFS. We
-	 * should check if there is a mount point using it with rootfs_data
+	 * should check if there is a mount point using it with overlay_partition
 	 * as upperdir.
 	 */
 	if (find_filesystem("overlay")) {
@@ -122,9 +122,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	v = volume_find("rootfs_data");
+	v = volume_find(get_overlay_partition());
 	if (!v) {
-		ULOG_ERR("MTD partition 'rootfs_data' not found\n");
+		ULOG_ERR("MTD partition '%s' not found\n", get_overlay_partition());
 		return -1;
 	}
 

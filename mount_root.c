@@ -20,6 +20,7 @@
 
 #include <libubox/ulog.h>
 
+#include "overlay_partition.h"
 #include "libfstools/libfstools.h"
 #include "libfstools/volume.h"
 
@@ -31,7 +32,7 @@ static int
 start(int argc, char *argv[1])
 {
 	struct volume *root;
-	struct volume *data = volume_find("rootfs_data");
+	struct volume *data = volume_find(get_overlay_partition());
 	struct stat s;
 
 	if (!getenv("PREINIT") && stat("/tmp/.preinit", &s))
@@ -45,9 +46,9 @@ start(int argc, char *argv[1])
 	}
 
 	/*
-	 * Before trying to mount and use "rootfs_data" let's check if there is
+	 * Before trying to mount and use "<overlay_partition>" let's check if there is
 	 * extroot configured. Following call will handle reading config from
-	 * the "rootfs_data" on its own.
+	 * the "<overlay_partition>" on its own.
 	 */
 	extroot_prefix = "";
 	if (!mount_extroot()) {
@@ -55,7 +56,7 @@ start(int argc, char *argv[1])
 		return 0;
 	}
 
-	/* There isn't extroot, so just try to mount "rootfs_data" */
+	/* There isn't extroot, so just try to mount "<overlay_partition>" */
 	volume_init(data);
 	switch (volume_identify(data)) {
 	case FS_NONE:
@@ -103,7 +104,7 @@ stop(int argc, char *argv[1])
 static int
 done(int argc, char *argv[1])
 {
-	struct volume *v = volume_find("rootfs_data");
+	struct volume *v = volume_find(get_overlay_partition());
 
 	if (!v)
 		return -1;
