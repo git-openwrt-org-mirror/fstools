@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <fnmatch.h>
+#include <inttypes.h>
 
 #include "../overlay_partition.h"
 #include "libfstools.h"
@@ -396,7 +397,7 @@ static int blkdev_get_disk_info(
 		if (info->partition[part].partition != (part + 1))
 			continue;
 
-		ULOG_INFO("%s: p%d, %s, start %llu, size %llu%s%s\n",
+		ULOG_INFO("%s: p%d, %s, start %"PRIu64", size %"PRIu64"%s%s\n",
 			info->partition[part].dev[0]
 				? info->partition[part].dev : info->dev,
 			part + 1,
@@ -749,14 +750,14 @@ static int rootdisk_volume_init(struct volume *v)
 		ULOG_INFO("rootdisk overlay filesystem has not been formatted yet\n");
 #ifdef OVL_F2FS_ENABLE
 		if (rootdisk_use_f2fs(p)) {
-			ULOG_INFO("creating f2fs overlay filesystem (%s, offset %llu)...\n",
+			ULOG_INFO("creating f2fs overlay filesystem (%s, offset %"PRIu64")...\n",
 				v->blk, p->offset);
 			snprintf(str, sizeof(str), "mkfs.f2fs -q -l %s %s", get_overlay_partition(), v->blk);
 		}
 		else
 #endif
 		{
-			ULOG_INFO("creating ext4 overlay filesystem (%s, offset %llu)...\n",
+			ULOG_INFO("creating ext4 overlay filesystem (%s, offset %"PRIu64")...\n",
 				v->blk, p->offset);
 			snprintf(str, sizeof(str), "mkfs.ext4 -q -L %s %s", get_overlay_partition(), v->blk);
 		}
