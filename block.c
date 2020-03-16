@@ -500,13 +500,29 @@ static int _cache_load(const char *path)
 		return -1;
 
 	for (j = 0; j < gl.gl_pathc; j++) {
+		/*
+		 * Devices /dev/mtdblock1,2,3,5,18,19,20 cannot be accessed
+		 * from userspace on WP76xx modules. The system hangs when
+		 * accessing these devices.
+		 */
+
+		/* ULOG_ERR("%s: probing device '%s'...\n", __FUNCTION__, gl.gl_pathv[j]); */
+
+		if (!strcmp(gl.gl_pathv[j], "/dev/mtdblock1") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock2") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock3") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock5") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock18") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock19") ||
+		    !strcmp(gl.gl_pathv[j], "/dev/mtdblock20"))
+		    continue;
+
 		struct probe_info *pr = _probe_path(gl.gl_pathv[j]);
 		if (pr)
 			list_add_tail(&pr->list, &devices);
 	}
 
 	globfree(&gl);
-
 	return 0;
 }
 
