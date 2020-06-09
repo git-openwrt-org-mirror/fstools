@@ -59,6 +59,7 @@ start(int argc, char *argv[1])
 	/* There isn't extroot, so just try to mount "<overlay_partition>" */
 	volume_init(data);
 	switch (volume_identify(data)) {
+	case -1:
 	case FS_NONE:
 		ULOG_WARN("no usable overlay filesystem found, using tmpfs overlay\n");
 		return ramoverlay();
