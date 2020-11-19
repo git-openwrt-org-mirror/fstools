@@ -18,18 +18,9 @@
 #include <libubox/blob.h>
 #include <libubox/ulog.h>
 #include <libubox/utils.h>
+#include "fstype.h"
 
 struct volume;
-
-enum {
-	FS_NONE,
-	FS_SNAPSHOT,
-	FS_JFFS2,
-	FS_DEADCODE,
-	FS_UBIFS,
-	FS_F2FS,
-	FS_EXT4,
-};
 
 enum fs_state {
 	FS_STATE_UNKNOWN,

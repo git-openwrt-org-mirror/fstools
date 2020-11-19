@@ -47,6 +47,8 @@
 #include <libubus.h>
 
 #include "overlay_partition.h"
+#include "libfstools/fstype.h"
+#include "libfstools/volume.h"
 #include "probe.h"
 
 #define AUTOFS_MOUNT_PATH       "/tmp/run/blockd/"
@@ -1592,6 +1594,44 @@ static int main_extroot(int argc, char **argv)
 		}
 	}
 #endif
+
+	/* Find volume using libfstools */
+	struct volume *data = volume_find("rootfs_data");
+	if (data) {
+		volume_init(data);
+
+		switch (volume_identify(data)) {
+			case FS_EXT4: {
+				char cfg[] = "/tmp/ext4_cfg";
+
+				/* Mount volume and try extroot (using fstab from that vol) */
+				mkdir_p(cfg);
+				if (!mount(data->blk, cfg, "ext4", MS_NOATIME, NULL)) {
+					err = mount_extroot(cfg);
+					umount2(cfg, MNT_DETACH);
+				}
+				if (err < 0)
+					rmdir("/tmp/overlay");
+				rmdir(cfg);
+				return err;
+			}
+
+			case FS_F2FS: {
+				char cfg[] = "/tmp/f2fs_cfg";
+
+				/* Mount volume and try extroot (using fstab from that vol) */
+				mkdir_p(cfg);
+				if (!mount(data->blk, cfg, "f2fs", MS_NOATIME, NULL)) {
+					err = mount_extroot(cfg);
+					umount2(cfg, MNT_DETACH);
+				}
+				if (err < 0)
+					rmdir("/tmp/overlay");
+				rmdir(cfg);
+				return err;
+			}
+		}
+	}
 
 	/* As a last resort look for /etc/config/fstab on "rootfs" partition */
 	return mount_extroot(NULL);
