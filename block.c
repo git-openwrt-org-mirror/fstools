@@ -422,7 +422,7 @@ static struct uci_package * config_try_load(struct uci_context *ctx, char *path)
 
 	if (uci_load(ctx, file, &pkg)) {
 		uci_get_errorstr(ctx, &err, file);
-		ULOG_ERR("unable to load configuration (%s)\n", err);
+		ULOG_WARN("unable to load configuration (%s)\n", err);
 
 		free(err);
 		return NULL;
